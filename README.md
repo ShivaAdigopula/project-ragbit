@@ -79,8 +79,8 @@ To build a production-grade system, the following standards are strictly enforce
 ## 🗺️ Project Roadmap (Phased Execution)
 
 * [x] **Phase 0:** Project Initiation & Standards setup
-* [ ] **Phase 1:** Software Requirements Specification (SRS)
-* [ ] **Phase 2:** High-Level & Low-Level System Design
+* [x] **Phase 1:** Software Requirements Specification (SRS)
+* [x] **Phase 2:** High-Level & Low-Level System Design
 * [ ] **Phase 3:** Directory Scaffolding & Logging / Config Setup
 * [ ] **Phase 4:** MarkItDown Document Ingestion Pipeline
 * [ ] **Phase 5:** MongoDB Vector DB Storage Integration
@@ -90,3 +90,73 @@ To build a production-grade system, the following standards are strictly enforce
 * [ ] **Phase 9:** FastAPI Service Layer
 * [ ] **Phase 10:** Streamlit Frontend
 * [ ] **Phase 11:** Final Cleanup, Documentation, & Validation
+
+---
+
+## 🔧 Installation & Local Setup Guide
+
+Follow these steps to configure and run the application in a local development environment.
+
+### 1. System Prerequisites
+* **Python:** Version 3.10 or higher.
+* **MongoDB:** An active instance of MongoDB Community Server running locally or an Atlas connection string.
+* **Ollama:** Installed locally (macOS/Linux/Windows). Download from [ollama.com](https://ollama.com).
+
+### 2. Local LLM & Embedding Setup
+Start the Ollama application or service, and run the following terminal commands to pull the necessary models:
+```bash
+# Pull the generative reasoning model
+ollama pull gemma:12b
+
+# Pull the semantic text embedding model
+ollama pull nomic-embed-text
+```
+
+### 3. Project Configuration & Installation
+1. Clone the repository and navigate to the project root directory:
+   ```bash
+   cd Project-Ragbit
+   ```
+2. Initialize and activate a Python virtual environment:
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
+3. Install the application dependencies:
+   ```bash
+   pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
+4. Create a local environment file `.env` in the project root:
+   ```env
+   # Database Configurations
+   MONGODB_URI=mongodb://localhost:27017
+   MONGODB_DB_NAME=rag_enterprise_db
+
+   # Ollama Configurations
+   OLLAMA_BASE_URL=http://localhost:11434
+   OLLAMA_GEN_MODEL=gemma:12b
+   OLLAMA_EMBED_MODEL=nomic-embed-text
+
+   # Logging Configurations
+   LOG_LEVEL=INFO
+   ```
+
+### 4. Running the Application
+
+#### A. Run the FastAPI Backend:
+Ensure MongoDB is running, then start the FastAPI development server:
+```bash
+cd backend
+uvicorn main:app --reload --port 8000
+```
+Verify the API liveness by visiting `http://localhost:8000/healthz` or the OpenAPI documentation at `http://localhost:8000/docs`.
+
+#### B. Run the Streamlit Frontend:
+In a separate terminal (with the virtual environment activated):
+```bash
+cd frontend
+streamlit run app.py --server.port 8501
+```
+Open `http://localhost:8501` in your browser to interact with the RAG user interface.
+
