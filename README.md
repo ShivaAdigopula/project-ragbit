@@ -106,7 +106,7 @@ Follow these steps to configure and run the application in a local development e
 Start the Ollama application or service, and run the following terminal commands to pull the necessary models:
 ```bash
 # Pull the generative reasoning model
-ollama pull gemma:12b
+ollama pull gemma4:latest
 
 # Pull the semantic text embedding model
 ollama pull nomic-embed-text
@@ -135,7 +135,7 @@ ollama pull nomic-embed-text
 
    # Ollama Configurations
    OLLAMA_BASE_URL=http://localhost:11434
-   OLLAMA_GEN_MODEL=gemma:12b
+   OLLAMA_GEN_MODEL=gemma4:latest
    OLLAMA_EMBED_MODEL=nomic-embed-text
 
    # Logging Configurations

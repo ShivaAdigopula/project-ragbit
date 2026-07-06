@@ -184,7 +184,7 @@ FastAPI will serve as the delivery system. The endpoints follow RESTful resource
   "metadata": {
     "latency_ms": 342,
     "tokens_used": 182,
-    "model": "gemma:12b"
+    "model": "gemma4:latest"
   }
 }
 ```

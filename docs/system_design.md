@@ -226,7 +226,7 @@ Stores actual document pieces along with embedding vectors:
   "metadata": {
     "latency_ms": 482,
     "tokens_used": 194,
-    "model": "gemma:12b"
+    "model": "gemma4:latest"
   }
 }
 ```
