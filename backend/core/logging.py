@@ -1,6 +1,8 @@
 import logging
 import sys
 import time
+import os
+from logging.handlers import RotatingFileHandler
 from typing import Any
 from backend.core.config import settings
 
@@ -43,6 +45,21 @@ def setup_logging() -> None:
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(StructuredFormatter(datefmt="%Y-%m-%dT%H:%M:%S"))
     root_logger.addHandler(console_handler)
+    
+    # File Handler (logs/app.log)
+    try:
+        os.makedirs("logs", exist_ok=True)
+        file_handler = RotatingFileHandler(
+            "logs/app.log",
+            maxBytes=10 * 1024 * 1024,  # 10 MB
+            backupCount=5,
+            encoding="utf-8"
+        )
+        file_handler.setFormatter(StructuredFormatter(datefmt="%Y-%m-%dT%H:%M:%S"))
+        root_logger.addHandler(file_handler)
+    except Exception as e:
+        # Fallback if logs dir cannot be written
+        sys.stderr.write(f"Warning: Failed to initialize file logging handler: {str(e)}\n")
     
     # Adjust specific noisy dependencies
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
