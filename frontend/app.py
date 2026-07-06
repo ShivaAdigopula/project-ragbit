@@ -236,8 +236,10 @@ if uploaded_file is not None:
 
 st.sidebar.markdown("---")
 
-# Documents List Section
 st.sidebar.markdown("### 📄 Document Ingestion List")
+if st.sidebar.button("🔄 Refresh Status", use_container_width=True):
+    st.rerun()
+
 documents = fetch_documents()
 
 if not documents:
