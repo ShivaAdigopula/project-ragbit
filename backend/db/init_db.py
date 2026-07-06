@@ -23,17 +23,22 @@ async def initialize_database():
     logger.info("Starting MongoDB database initialization...")
     try:
         db = DatabaseClient.get_db()
+        existing_collections = await db.list_collection_names()
         
         # 2. Initialize parent 'documents' collection
         logger.info("Initializing 'documents' collection and unique hash index...")
-        await db.create_collection("documents", exception_on_exist=False)
+        if "documents" not in existing_collections:
+            await db.create_collection("documents")
+            logger.info("Created 'documents' collection.")
         await db["documents"].create_index("hash", unique=True)
         await db["documents"].create_index("filename")
         logger.info("Unique index on 'hash' and filter index on 'filename' established.")
         
         # 3. Initialize 'document_chunks' collection
         logger.info("Initializing 'document_chunks' collection and indexes...")
-        await db.create_collection("document_chunks", exception_on_exist=False)
+        if "document_chunks" not in existing_collections:
+            await db.create_collection("document_chunks")
+            logger.info("Created 'document_chunks' collection.")
         await db["document_chunks"].create_index("doc_id")
         await db["document_chunks"].create_index("filename")
         logger.info("Cascade lookup indexes on 'doc_id' and 'filename' established.")
