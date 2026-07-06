@@ -128,6 +128,9 @@ ollama pull nomic-embed-text
    pip install -r requirements.txt
    ```
 4. Create a local environment file `.env` in the project root:
+   > [!IMPORTANT]
+   > If your MongoDB password or username contains special characters (such as `@`, `:`, `/`, `+`, etc.), they **must be URL-encoded** (for example, `@` becomes `%40`) in the connection string to prevent URI parsing and authentication errors.
+
    ```env
    # Database Configurations
    MONGODB_URI=mongodb://localhost:27017
