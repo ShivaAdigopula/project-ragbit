@@ -7,6 +7,7 @@ from backend.core.config import settings
 from backend.core.logging import logger
 from backend.api.router import api_router
 from backend.api.routes import health
+from backend.db.client import DatabaseClient
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -15,10 +16,18 @@ async def lifespan(app: FastAPI):
     Useful for establishing connection pools (e.g. MongoDB, HTTP Clients).
     """
     logger.info("Initializing Enterprise RAG Services...")
-    # MongoDB initialization code will go here in Phase 5
+    try:
+        # Establish connection pool to MongoDB
+        DatabaseClient.get_client()
+        logger.info("MongoDB client connected successfully.")
+    except Exception as e:
+        logger.error(f"Failed to connect to MongoDB on startup: {str(e)}", exc_info=True)
+        
     yield
+    
     logger.info("Tearing down Enterprise RAG Services connection pools...")
-    # MongoDB close code will go here in Phase 5
+    DatabaseClient.close_client()
+
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
