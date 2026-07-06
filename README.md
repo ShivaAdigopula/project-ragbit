@@ -1,6 +1,6 @@
 # Enterprise RAG System
 
-A production-grade, highly modular, and secure Retrieval-Augmented Generation (RAG) system built with FastAPI, MongoDB Vector Search, MarkItDown, Pydantic AI, Ollama (Gemma 12B & nomic-embed-text), and Streamlit.
+A production-grade, highly modular, and secure Retrieval-Augmented Generation (RAG) system built with FastAPI, MongoDB Vector Search, MarkItDown, Pydantic AI, Ollama (Gemma 4 & nomic-embed-text), and Streamlit.
 
 ---
 
@@ -19,7 +19,7 @@ This document establishes the architecture decisions, folder structure, coding g
 | **Ingestion Engine** | **MarkItDown** | Microsoft's native text and formatting extractor. Converts PDFs, Office docs, etc., to structured Markdown, preserving semantic markers like headers and tables for superior chunking. |
 | **Embeddings** | **nomic-embed-text (Ollama)** | A local, high-performance 768-dimensional text embedding model with an 8k context window, ensuring local data privacy and excellent retrieval relevance. |
 | **Orchestration Agent** | **Pydantic AI** | Enterprise-grade agent framework for building structured LLM interfaces. Guarantees schema validation, handles retry logic, and outputs strict JSON responses with confidence scores. |
-| **Local LLM** | **Ollama (Gemma 12B)** | Runs locally to satisfy strict data privacy and compliance. Gemma 12B provides advanced reasoning, high instruction-following performance, and a large context length. |
+| **Local LLM** | **Ollama (Gemma 4)** | Runs locally to satisfy strict data privacy and compliance. Gemma 4 provides advanced reasoning, high instruction-following performance, and a large context length. |
 | **Frontend UI** | **Streamlit** | Enables swift development of internal dashboards, chat inputs, and source document displays using clean Python code. |
 
 
@@ -81,15 +81,15 @@ To build a production-grade system, the following standards are strictly enforce
 * [x] **Phase 0:** Project Initiation & Standards setup
 * [x] **Phase 1:** Software Requirements Specification (SRS)
 * [x] **Phase 2:** High-Level & Low-Level System Design
-* [ ] **Phase 3:** Directory Scaffolding & Logging / Config Setup
-* [ ] **Phase 4:** MarkItDown Document Ingestion Pipeline
-* [ ] **Phase 5:** MongoDB Vector DB Storage Integration
-* [ ] **Phase 6:** Semantic & Hybrid Retrieval Engine
-* [ ] **Phase 7:** Ollama Gemma 12B Orchestration Layer
-* [ ] **Phase 8:** Pydantic AI Structured Output Generation
-* [ ] **Phase 9:** FastAPI Service Layer
-* [ ] **Phase 10:** Streamlit Frontend
-* [ ] **Phase 11:** Final Cleanup, Documentation, & Validation
+* [x] **Phase 3:** Directory Scaffolding & Logging / Config Setup
+* [x] **Phase 4:** MarkItDown Document Ingestion Pipeline
+* [x] **Phase 5:** MongoDB Vector DB Storage Integration
+* [x] **Phase 6:** Semantic & Hybrid Retrieval Engine
+* [x] **Phase 7:** Ollama Gemma4 Orchestration Layer
+* [x] **Phase 8:** Pydantic AI Structured Output Generation
+* [x] **Phase 9:** FastAPI Service Layer
+* [x] **Phase 10:** Streamlit Frontend
+* [x] **Phase 11:** Final Cleanup, Documentation, & Validation
 
 ---
 
