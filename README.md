@@ -1,6 +1,6 @@
 # Enterprise RAG System
 
-A production-grade, highly modular, and secure Retrieval-Augmented Generation (RAG) system built with FastAPI, MongoDB Vector Search, MarkItDown, Pydantic AI, Ollama (Gemma 12B), and Streamlit.
+A production-grade, highly modular, and secure Retrieval-Augmented Generation (RAG) system built with FastAPI, MongoDB Vector Search, MarkItDown, Pydantic AI, Ollama (Gemma 12B & nomic-embed-text), and Streamlit.
 
 ---
 
@@ -17,9 +17,11 @@ This document establishes the architecture decisions, folder structure, coding g
 | **API Layer** | **FastAPI** | High performance asynchronous execution, type safety with Pydantic, auto-generated OpenAPI documentation, and native dependency injection. |
 | **Vector DB** | **MongoDB Vector Search** | Combines operational database capabilities with semantic vector search in a unified data store. Allows hybrid queries (metadata filters + vector search) without double-writing or syncing issues. |
 | **Ingestion Engine** | **MarkItDown** | Microsoft's native text and formatting extractor. Converts PDFs, Office docs, etc., to structured Markdown, preserving semantic markers like headers and tables for superior chunking. |
+| **Embeddings** | **nomic-embed-text (Ollama)** | A local, high-performance 768-dimensional text embedding model with an 8k context window, ensuring local data privacy and excellent retrieval relevance. |
 | **Orchestration Agent** | **Pydantic AI** | Enterprise-grade agent framework for building structured LLM interfaces. Guarantees schema validation, handles retry logic, and outputs strict JSON responses with confidence scores. |
 | **Local LLM** | **Ollama (Gemma 12B)** | Runs locally to satisfy strict data privacy and compliance. Gemma 12B provides advanced reasoning, high instruction-following performance, and a large context length. |
 | **Frontend UI** | **Streamlit** | Enables swift development of internal dashboards, chat inputs, and source document displays using clean Python code. |
+
 
 ---
 
