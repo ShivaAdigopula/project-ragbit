@@ -106,64 +106,112 @@ graph TD
 
 ## 5. API Design & Requirements
 
-FastAPI will serve as the delivery system. The contracts are defined below:
+FastAPI will serve as the delivery system. The endpoints follow RESTful resource design and industry best practices.
 
-### 5.1 Document Ingest Endpoint
-* **Endpoint:** `POST /api/v1/documents/ingest`
+### 5.1 Document Management API
+
+#### 5.1.1 Upload Document
+* **Endpoint:** `POST /api/v1/documents`
 * **Content-Type:** `multipart/form-data`
-* **Request:** File upload payload.
-* **Response Status:** `202 Accepted`
+* **Request Payload:**
+  * `file`: Binary file upload
+  * `metadata`: Optional JSON string containing custom tags or labels
+* **Response Status:** `201 Created`
 * **Response Body:**
 ```json
 {
-  "document_id": "doc_639b76b_2026",
+  "id": "doc_639b76b_2026",
   "filename": "annual_report.pdf",
-  "status": "ingested",
-  "chunks_count": 42,
-  "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  "status": "processing",
+  "mime_type": "application/pdf",
+  "size_bytes": 1048576,
+  "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "created_at": "2026-07-06T20:37:28Z"
 }
 ```
 
-### 5.2 RAG Query Endpoint
-* **Endpoint:** `POST /api/v1/query`
+#### 5.1.2 Get Document Details / Status
+* **Endpoint:** `GET /api/v1/documents/{document_id}`
+* **Response Status:** `200 OK`
+* **Response Body:**
+```json
+{
+  "id": "doc_639b76b_2026",
+  "filename": "annual_report.pdf",
+  "status": "completed",
+  "mime_type": "application/pdf",
+  "size_bytes": 1048576,
+  "chunks_count": 42,
+  "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "created_at": "2026-07-06T20:37:28Z",
+  "updated_at": "2026-07-06T20:39:10Z"
+}
+```
+
+#### 5.1.3 Delete Document
+* **Endpoint:** `DELETE /api/v1/documents/{document_id}`
+* **Response Status:** `204 No Content`
+
+### 5.2 RAG Query API
+
+#### 5.2.1 Execute RAG Query
+* **Endpoint:** `POST /api/v1/queries`
 * **Content-Type:** `application/json`
 * **Request Body:**
 ```json
 {
   "query": "What are our financial targets for 2026?",
-  "metadata_filter": {
+  "filters": {
     "filename": "annual_report.pdf"
   },
   "top_k": 5
 }
 ```
 * **Response Status:** `200 OK`
-* **Response Body (Strict Structured Format):**
+* **Response Body (Strict JSON Schema):**
 ```json
 {
   "answer": "The financial target for 2026 is to reach $10M ARR with a gross margin of 75%.",
   "confidence_score": 0.94,
   "citations": [
     {
-      "document_name": "annual_report.pdf",
+      "document_id": "doc_639b76b_2026",
+      "filename": "annual_report.pdf",
       "heading_path": "Financial Projections > Target Summary",
-      "snippet": "Gross margin target is set at 75% for fiscal year 2026..."
+      "text_snippet": "Gross margin target is set at 75% for fiscal year 2026..."
     }
   ],
-  "status": "success"
+  "metadata": {
+    "latency_ms": 342,
+    "tokens_used": 182,
+    "model": "gemma:12b"
+  }
 }
 ```
 
-### 5.3 System Health Endpoint
-* **Endpoint:** `GET /api/v1/health`
+### 5.3 Health & Readiness API (Kubernetes Standards)
+
+#### 5.3.1 Liveness Probe
+* **Endpoint:** `GET /healthz`
 * **Response Status:** `200 OK`
 * **Response Body:**
 ```json
 {
-  "status": "healthy",
-  "database": "connected",
-  "ollama": "connected",
-  "model_loaded": "gemma:12b"
+  "status": "healthy"
+}
+```
+
+#### 5.3.2 Readiness Probe
+* **Endpoint:** `GET /readyz`
+* **Response Status:** `200 OK` / `503 Service Unavailable`
+* **Response Body:**
+```json
+{
+  "status": "ready",
+  "services": {
+    "database": "connected",
+    "ollama": "connected"
+  }
 }
 ```
 
