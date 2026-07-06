@@ -150,7 +150,7 @@ Ensure MongoDB is running, then start the FastAPI development server:
 cd backend
 uvicorn main:app --reload --port 8000
 ```
-Verify the API liveness by visiting `http://localhost:8000/healthz` or the OpenAPI documentation at `http://localhost:8000/docs`.
+Verify the API liveness by visiting `http://localhost:8000/health` or the OpenAPI documentation at `http://localhost:8000/docs`.
 
 #### B. Run the Streamlit Frontend:
 In a separate terminal (with the virtual environment activated):

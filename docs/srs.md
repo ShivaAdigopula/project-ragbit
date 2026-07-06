@@ -192,7 +192,7 @@ FastAPI will serve as the delivery system. The endpoints follow RESTful resource
 ### 5.3 Health & Readiness API (Kubernetes Standards)
 
 #### 5.3.1 Liveness Probe
-* **Endpoint:** `GET /healthz`
+* **Endpoint:** `GET /health`
 * **Response Status:** `200 OK`
 * **Response Body:**
 ```json
@@ -202,7 +202,7 @@ FastAPI will serve as the delivery system. The endpoints follow RESTful resource
 ```
 
 #### 5.3.2 Readiness Probe
-* **Endpoint:** `GET /readyz`
+* **Endpoint:** `GET /ready`
 * **Response Status:** `200 OK` / `503 Service Unavailable`
 * **Response Body:**
 ```json
