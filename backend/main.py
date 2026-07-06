@@ -5,6 +5,8 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from backend.core.config import settings
 from backend.core.logging import logger
+from backend.api.router import api_router
+from backend.api.routes import health
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -60,23 +62,11 @@ async def global_exception_handler(request: Request, exc: Exception):
         }
     )
 
-# --- Base Health & Readiness Routes (Kubernetes Standards) ---
+# --- Include Routers ---
 
-@app.get("/healthz", status_code=status.HTTP_200_OK, tags=["Health"])
-async def liveness_probe():
-    """Liveness probe to confirm FastAPI service is running."""
-    return {"status": "healthy"}
+# Root level health routes (for standard cloud liveness/readiness probes)
+app.include_router(health.router)
 
-@app.get("/readyz", status_code=status.HTTP_200_OK, tags=["Health"])
-async def readiness_probe():
-    """
-    Readiness probe to confirm all backend services (MongoDB, Ollama) are connected.
-    """
-    # Readiness checks will be fully wired up in Phase 9
-    return {
-      "status": "ready",
-      "services": {
-        "database": "connected",
-        "ollama": "connected"
-      }
-    }
+# Versioned API routes
+app.include_router(api_router, prefix=settings.API_V1_STR)
+
