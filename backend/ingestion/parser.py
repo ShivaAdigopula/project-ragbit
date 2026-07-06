@@ -35,8 +35,15 @@ class DocumentParser:
             if not result or not result.text_content:
                 raise ValueError(f"MarkItDown returned empty content for {filename}")
                 
-            logger.info(f"Successfully converted {filename} to Markdown ({len(result.text_content)} chars)")
-            return result.text_content
+            # Collapse consecutive decorative characters (e.g. dot leaders in TOCs) to prevent token explosions
+            import re
+            content = result.text_content
+            content = re.sub(r'\.{3,}', ' ', content)
+            content = re.sub(r'-{3,}', ' ', content)
+            content = re.sub(r'_{3,}', ' ', content)
+            
+            logger.info(f"Successfully converted {filename} to Markdown ({len(content)} chars)")
+            return content
             
         except Exception as e:
             logger.error(f"Failed to parse document {filename}: {str(e)}", exc_info=True)
