@@ -17,6 +17,15 @@ class RAGRepository:
 
     # --- Document CRUD Operations ---
 
+    async def list_documents(self) -> List[Dict[str, Any]]:
+        """Retrieves all document records in the database sorted by creation date descending."""
+        cursor = self.documents.find().sort("created_at", -1)
+        results = []
+        async for doc in cursor:
+            doc["_id"] = str(doc["_id"])
+            results.append(doc)
+        return results
+
     async def get_document_by_hash(self, doc_hash: str) -> Optional[Dict[str, Any]]:
         """Retrieves a document record matching its SHA-256 content checksum."""
         doc = await self.documents.find_one({"hash": doc_hash})

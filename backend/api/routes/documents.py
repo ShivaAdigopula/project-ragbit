@@ -62,6 +62,15 @@ async def process_and_embed_document_task(
         await repo.update_document_status(doc_id, "failed")
 
 
+@router.get("", status_code=status.HTTP_200_OK)
+async def list_uploaded_documents():
+    """
+    Retrieves a list of all documents uploaded and their current processing status.
+    """
+    repo = RAGRepository()
+    return await repo.list_documents()
+
+
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def upload_document(
     background_tasks: BackgroundTasks,
