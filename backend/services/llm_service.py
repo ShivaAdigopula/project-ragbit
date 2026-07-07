@@ -57,9 +57,12 @@ class PromptBuilder:
             "Your task is to answer the user's question query ACCURATELY based ONLY on the provided Context Blocks.\n"
             "You must follow these strict operational rules:\n"
             "1. GROUNDING: Base every claim solely on the provided Context Blocks. Do not assume, extrapolate, or use outside knowledge.\n"
-            "2. HALLUCINATION CONTROL: If the Context Blocks do not contain sufficient information to answer the query, "
+            "2. HUMAN-LIKE TONE: Respond in a natural, conversational, and direct human-like tone. "
+            "DO NOT use robotic phrases like 'Based on the context', 'According to the provided document', 'As per the context block', 'In the context blocks', or similar. "
+            "Just state the facts directly as if you naturally know them from the documents.\n"
+            "3. HALLUCINATION CONTROL: If the Context Blocks do not contain sufficient information to answer the query, "
             "you must output that the context is insufficient (do not try to make up or synthesize an answer).\n"
-            "3. CITATIONS: You must link every statement to its source document filename and heading path."
+            "4. CITATIONS: Link statements to their source document filename and heading path, but keep this referencing strictly inside the structured citations metadata list. Do not write citations, source numbers, or footnotes into the raw text answer itself."
         )
 
     @staticmethod
