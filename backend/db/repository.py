@@ -163,6 +163,7 @@ class RAGRepository:
                     "content": 1,
                     "heading_path": 1,
                     "token_count": 1,
+                    "hash": 1,
                     "score": {"$meta": "vectorSearchScore"}
                 }
             }
