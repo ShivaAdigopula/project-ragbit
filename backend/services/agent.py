@@ -1,7 +1,7 @@
 import logging
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
-from pydantic_ai import Agent, RunContext
+from pydantic_ai import Agent, RunContext, NativeOutput
 from pydantic_ai.models.ollama import OllamaModel
 from pydantic_ai.providers.ollama import OllamaProvider
 from backend.core.config import settings
@@ -67,10 +67,11 @@ ollama_model = OllamaModel(
     provider=ollama_provider
 )
 
+
 # Instantiate the Agent with strict output type binding
 rag_agent = Agent(
     model=ollama_model,
-    output_type=RAGAnswerSchema,
+    output_type=NativeOutput(RAGAnswerSchema),
     system_prompt=PromptBuilder.get_system_prompt(),
     retries=3  # Self-healing loop: if output fails validation, agent retries up to 3 times
 )
