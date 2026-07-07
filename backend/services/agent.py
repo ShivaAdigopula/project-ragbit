@@ -100,8 +100,8 @@ class PydanticAIEngine:
             # Run the agent asynchronously
             result = await self.agent.run(user_prompt)
             
-            # The result.data is guaranteed to be validated RAGAnswerSchema
-            answer_payload: RAGAnswerSchema = result.data
+            # The result.output is guaranteed to be validated RAGAnswerSchema
+            answer_payload: RAGAnswerSchema = result.output
             logger.info(
                 f"Agent reasoning executed successfully. "
                 f"Status: {answer_payload.status}, "

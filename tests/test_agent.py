@@ -21,7 +21,7 @@ async def test_agent_successful_execution():
         ],
         status="success"
     )
-    mock_run_result.data = mock_data
+    mock_run_result.output = mock_data
     
     # Patch the agent's run method
     with patch.object(engine.agent, "run", new_callable=AsyncMock) as mock_run:
