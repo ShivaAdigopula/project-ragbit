@@ -58,11 +58,17 @@ class RAGAnswerSchema(BaseModel):
 
 # --- Pydantic AI Agent Setup ---
 
+from pydantic_ai.profiles import ModelProfile
+
 # Initialize local Ollama model using native Pydantic AI Ollama wrapper
 ollama_provider = OllamaProvider(base_url=f"{settings.OLLAMA_BASE_URL}/v1")
 ollama_model = OllamaModel(
     model_name=settings.OLLAMA_GEN_MODEL,
-    provider=ollama_provider
+    provider=ollama_provider,
+    profile=ModelProfile(
+        supports_json_schema_output=False,
+        supports_json_object_output=False
+    )
 )
 
 # Instantiate the Agent with strict output type binding
