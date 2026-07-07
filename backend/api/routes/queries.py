@@ -3,6 +3,7 @@ import time
 from fastapi import APIRouter, status, HTTPException
 from pydantic import BaseModel, Field
 from typing import Dict, Any, List, Optional
+from backend.core.config import settings
 from backend.rag.search import RetrievalEngine
 from backend.services.llm_service import ContextCompressor
 from backend.services.agent import PydanticAIEngine
@@ -68,8 +69,8 @@ async def execute_query(request: QueryRequest):
                 )
             )
             
-        # 2. Compress Context using sliding budget limits (Max 1500 tokens)
-        compressor = ContextCompressor(max_context_tokens=1500)
+        # 2. Compress Context using sliding budget limits (from settings)
+        compressor = ContextCompressor(max_context_tokens=settings.MAX_CONTEXT_TOKENS)
         compressed_chunks, total_context_tokens = compressor.compress_context(raw_chunks)
         
         # 3. Call Pydantic AI Structured Generation
@@ -96,27 +97,14 @@ async def execute_query(request: QueryRequest):
         
         logger.info(f"Query processed successfully in {elapsed_ms}ms")
         
-        # Append formatted references list to the end of the response
-        formatted_answer = agent_response.answer
-        if citations_payload:
-            formatted_answer += "\n\n### 📚 References\n"
-            seen_refs = set()
-            ref_num = 1
-            for citation in citations_payload:
-                ref_key = (citation.filename, citation.heading_path)
-                if ref_key not in seen_refs:
-                    formatted_answer += f"{ref_num}. **{citation.filename}** (Section: *{citation.heading_path}*)\n"
-                    seen_refs.add(ref_key)
-                    ref_num += 1
-
         return QueryResponse(
-            answer=formatted_answer,
+            answer=agent_response.answer,
             confidence_score=agent_response.confidence_score,
             citations=citations_payload,
             metadata=QueryResponseMetadata(
                 latency_ms=elapsed_ms,
                 # Approximate tokens used (context + answer length)
-                tokens_used=total_context_tokens + int(len(formatted_answer.split()) * 1.3),
+                tokens_used=total_context_tokens + int(len(agent_response.answer.split()) * 1.3),
                 model=agent_response.status  # Can output status/model details
             )
         )

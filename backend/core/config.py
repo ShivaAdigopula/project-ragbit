@@ -23,9 +23,10 @@ class Settings(BaseSettings):
     # Logging Configurations
     LOG_LEVEL: str = Field(default="INFO", description="Global log level (DEBUG, INFO, WARNING, ERROR)")
     
-    # Ingestion Configurations
+    # Ingestion & Context Configurations
     MAX_CHUNK_SIZE_TOKENS: int = Field(default=512, description="Maximum token size for a document chunk")
     CHUNK_OVERLAP_PERCENTAGE: float = Field(default=0.10, description="Overlapping token percentage between adjacent chunks")
+    MAX_CONTEXT_TOKENS: int = Field(default=4000, description="Maximum tokens allowed for RAG context blocks")
 
     # Read from .env file at the workspace root
     model_config = SettingsConfigDict(
