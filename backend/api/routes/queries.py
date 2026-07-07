@@ -96,14 +96,27 @@ async def execute_query(request: QueryRequest):
         
         logger.info(f"Query processed successfully in {elapsed_ms}ms")
         
+        # Append formatted references list to the end of the response
+        formatted_answer = agent_response.answer
+        if citations_payload:
+            formatted_answer += "\n\n### 📚 References\n"
+            seen_refs = set()
+            ref_num = 1
+            for citation in citations_payload:
+                ref_key = (citation.filename, citation.heading_path)
+                if ref_key not in seen_refs:
+                    formatted_answer += f"{ref_num}. **{citation.filename}** (Section: *{citation.heading_path}*)\n"
+                    seen_refs.add(ref_key)
+                    ref_num += 1
+
         return QueryResponse(
-            answer=agent_response.answer,
+            answer=formatted_answer,
             confidence_score=agent_response.confidence_score,
             citations=citations_payload,
             metadata=QueryResponseMetadata(
                 latency_ms=elapsed_ms,
                 # Approximate tokens used (context + answer length)
-                tokens_used=total_context_tokens + int(len(agent_response.answer.split()) * 1.3),
+                tokens_used=total_context_tokens + int(len(formatted_answer.split()) * 1.3),
                 model=agent_response.status  # Can output status/model details
             )
         )
