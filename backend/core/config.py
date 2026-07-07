@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     
     # Ollama Configurations
     OLLAMA_BASE_URL: str = Field(default="http://localhost:11434", description="Ollama API base url")
-    OLLAMA_GEN_MODEL: str = Field(default="gemma4:latest", description="Generative reasoning model name")
+    OLLAMA_GEN_MODEL: str = Field(default="mistral:latest", description="Generative reasoning model name")
     OLLAMA_EMBED_MODEL: str = Field(default="nomic-embed-text", description="Text embedding model name")
     
     # Logging Configurations
