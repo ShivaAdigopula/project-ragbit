@@ -64,11 +64,7 @@ from pydantic_ai.profiles import ModelProfile
 ollama_provider = OllamaProvider(base_url=f"{settings.OLLAMA_BASE_URL}/v1")
 ollama_model = OllamaModel(
     model_name=settings.OLLAMA_GEN_MODEL,
-    provider=ollama_provider,
-    profile=ModelProfile(
-        supports_json_schema_output=False,
-        supports_json_object_output=False
-    )
+    provider=ollama_provider
 )
 
 # Instantiate the Agent with strict output type binding
