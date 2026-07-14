@@ -15,10 +15,15 @@ class Settings(BaseSettings):
     MONGODB_URI: str = Field(default="mongodb://localhost:27017", description="MongoDB connection string")
     MONGODB_DB_NAME: str = Field(default="rag_enterprise_db", description="Target database name")
     
-    # Ollama Configurations
-    OLLAMA_BASE_URL: str = Field(default="http://localhost:11434", description="Ollama API base url")
-    OLLAMA_GEN_MODEL: str = Field(default="mistral:latest", description="Generative reasoning model name")
-    OLLAMA_EMBED_MODEL: str = Field(default="nomic-embed-text", description="Text embedding model name")
+    # NVIDIA API Configurations
+    NVIDIA_BASE_URL: str = Field(default="https://integrate.api.nvidia.com/v1", description="NVIDIA API base url")
+    NVIDIA_API_KEY: str = Field(default="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", description="NVIDIA API key")
+    NVIDIA_GEN_MODEL: str = Field(default="nvidia/nemotron-3-ultra-550b-a55b", description="NVIDIA Generative model name")
+    NVIDIA_EMBED_API_KEY: str = Field(default="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", description="NVIDIA Embedding API key")
+    NVIDIA_EMBED_MODEL: str = Field(default="nvidia/nv-embedcode-7b-v1", description="NVIDIA Embedding model name")
+    
+    # Active Embedding Configurations
+    EMBEDDING_DIMENSION: int = Field(default=4096, description="Dimension size of active embedding model")
     
     # Logging Configurations
     LOG_LEVEL: str = Field(default="INFO", description="Global log level (DEBUG, INFO, WARNING, ERROR)")

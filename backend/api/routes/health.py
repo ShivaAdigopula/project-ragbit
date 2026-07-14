@@ -15,10 +15,10 @@ async def liveness_probe():
 @router.get("/ready", tags=["Health"])
 async def readiness_probe(response: Response):
     """
-    Readiness probe to confirm all backend services (MongoDB, Ollama) are connected.
+    Readiness probe to confirm all backend services (MongoDB, NVIDIA API) are connected.
     """
     db_status = "disconnected"
-    ollama_status = "disconnected"
+    nvidia_status = "disconnected"
     is_ready = True
     
     # 1. Verify MongoDB Connection
@@ -31,17 +31,18 @@ async def readiness_probe(response: Response):
         logger.error(f"Readiness probe failed: MongoDB connection error: {str(e)}")
         is_ready = False
         
-    # 2. Verify Ollama Connection
+    # 2. Verify NVIDIA API Connection
     try:
+        headers = {"Authorization": f"Bearer {settings.NVIDIA_API_KEY}"}
         async with httpx.AsyncClient(timeout=3.0) as client:
-            res = await client.get(f"{settings.OLLAMA_BASE_URL}/")
+            res = await client.get(f"{settings.NVIDIA_BASE_URL}/models", headers=headers)
             if res.status_code == 200:
-                ollama_status = "connected"
+                nvidia_status = "connected"
             else:
-                logger.error(f"Readiness probe failed: Ollama returned status {res.status_code}")
+                logger.error(f"Readiness probe failed: NVIDIA returned status {res.status_code}")
                 is_ready = False
     except Exception as e:
-        logger.error(f"Readiness probe failed: Ollama connection error: {str(e)}")
+        logger.error(f"Readiness probe failed: NVIDIA connection error: {str(e)}")
         is_ready = False
 
     if not is_ready:
@@ -51,7 +52,7 @@ async def readiness_probe(response: Response):
         "status": "ready" if is_ready else "unavailable",
         "services": {
             "database": db_status,
-            "ollama": ollama_status
+            "nvidia": nvidia_status
         }
     }
     

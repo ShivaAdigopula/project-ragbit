@@ -56,7 +56,7 @@ async def initialize_database():
                     {
                         "type": "vector",
                         "path": "embedding",
-                        "numDimensions": 768,
+                        "numDimensions": settings.EMBEDDING_DIMENSION,
                         "similarity": "cosine"
                     },
                     {
@@ -68,11 +68,11 @@ async def initialize_database():
         }
         
         # Check existing search indexes
-        cursor = db["document_chunks"].list_search_indexes()
-        existing_indexes = []
+        existing_indexes = {}
         try:
+            cursor = db["document_chunks"].list_search_indexes()
             async for idx in cursor:
-                existing_indexes.append(idx.get("name"))
+                existing_indexes[idx.get("name")] = idx
         except PyMongoError as list_err:
             # list_search_indexes() might fail on local MongoDB community edition if search engine is missing,
             # which is expected. We will handle this gracefully.
@@ -80,10 +80,34 @@ async def initialize_database():
                 f"Could not retrieve search indexes ({str(list_err)}). "
                 "Note: Atlas Vector Search indexes are only supported on MongoDB Atlas or Atlas Local Deployments."
             )
-            existing_indexes = []
 
         if "vector_index" in existing_indexes:
-            logger.info("Atlas Vector Search Index 'vector_index' already exists.")
+            # Check if dimensions match
+            existing_idx = existing_indexes["vector_index"]
+            latest_def = existing_idx.get("latestDefinition", {})
+            fields = latest_def.get("fields", [])
+            existing_dim = None
+            for f in fields:
+                if f.get("type") == "vector":
+                    existing_dim = f.get("numDimensions")
+                    break
+            
+            if existing_dim == settings.EMBEDDING_DIMENSION:
+                logger.info("Atlas Vector Search Index 'vector_index' already exists with matching dimensions.")
+            else:
+                logger.warning(
+                    f"Atlas Vector Search Index 'vector_index' exists but has dimension {existing_dim} "
+                    f"instead of the target {settings.EMBEDDING_DIMENSION}. Recreating index..."
+                )
+                try:
+                    await db["document_chunks"].drop_search_index("vector_index")
+                    logger.info("Dropped existing 'vector_index' successfully. Submitting creation command...")
+                    await db["document_chunks"].create_search_index(
+                        model=vector_index_definition
+                    )
+                    logger.info("Submitted recreation command for 'vector_index'.")
+                except Exception as ex:
+                    logger.error(f"Failed to recreate search index: {str(ex)}", exc_info=True)
         else:
             logger.info("Submitting Search Index creation command to Atlas...")
             # Run the command to create search indexes programmatically

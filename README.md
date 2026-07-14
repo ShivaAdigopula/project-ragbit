@@ -17,9 +17,9 @@ This document establishes the architecture decisions, folder structure, coding g
 | **API Layer** | **FastAPI** | High performance asynchronous execution, type safety with Pydantic, auto-generated OpenAPI documentation, and native dependency injection. |
 | **Vector DB** | **MongoDB Vector Search** | Combines operational database capabilities with semantic vector search in a unified data store. Allows hybrid queries (metadata filters + vector search) without double-writing or syncing issues. |
 | **Ingestion Engine** | **MarkItDown** | Microsoft's native text and formatting extractor. Converts PDFs, Office docs, etc., to structured Markdown, preserving semantic markers like headers and tables for superior chunking. |
-| **Embeddings** | **nomic-embed-text (Ollama)** | A local, high-performance 768-dimensional text embedding model with an 8k context window, ensuring local data privacy and excellent retrieval relevance. |
-| **Orchestration Agent** | **Pydantic AI** | Enterprise-grade agent framework for building structured LLM interfaces. Guarantees schema validation, handles retry logic, and outputs strict JSON responses with confidence scores. |
-| **Local LLM** | **Ollama (Gemma 4)** | Runs locally to satisfy strict data privacy and compliance. Gemma 4 provides advanced reasoning, high instruction-following performance, and a large context length. |
+| **Embeddings** | **LangChain OpenAIEmbeddings** | OpenAI-compatible hosted embeddings using NVIDIA's `nv-embedcode-7b-v1` (4096-dimensional vectors). |
+| **Orchestration Agent** | **LangChain (ChatNVIDIA)** | Core agent and LLM orchestration layer. Utilizes `ChatNVIDIA` and `with_structured_output` to execute structured schema validation and RAG answer formatting. |
+| **Reasoning Agent LLM** | **Nemotron 3 Ultra 550B** | LangChain-compatible ChatNVIDIA hosted model. Nemotron-3-Ultra-550B provides state-of-the-art logical reasoning and strict schema conformance. |
 | **Frontend UI** | **Streamlit** | Enables swift development of internal dashboards, chat inputs, and source document displays using clean Python code. |
 
 
@@ -66,7 +66,7 @@ To build a production-grade system, the following standards are strictly enforce
 
 ### 2. Clean Architecture
 * **Decoupled Layers:** The database layer (`backend/db`) does not know about FastAPI routers. The API layer (`backend/api`) only interacts with schemas and services.
-* **No Framework Bloat:** Do NOT use high-abstraction frameworks (like LlamaIndex or LangChain). Custom integrations with Pydantic AI, MongoDB, and Ollama keep the execution path explicit, debuggable, and performant.
+* **No Framework Bloat:** Do NOT use high-abstraction libraries unless explicitly needed. Custom wrapper integrations with LangChain (`ChatNVIDIA` / `OpenAIEmbeddings`) and MongoDB keep the execution path explicit, debuggable, and performant.
 
 ### 3. Coding Guidelines
 * **Type Hints:** All function definitions must have type signatures. Use Python 3.10+ type syntax (`dict[str, Any]`, `str | None`).
@@ -85,8 +85,8 @@ To build a production-grade system, the following standards are strictly enforce
 * [x] **Phase 4:** MarkItDown Document Ingestion Pipeline
 * [x] **Phase 5:** MongoDB Vector DB Storage Integration
 * [x] **Phase 6:** Semantic & Hybrid Retrieval Engine
-* [x] **Phase 7:** Ollama Gemma4 Orchestration Layer
-* [x] **Phase 8:** Pydantic AI Structured Output Generation
+* [x] **Phase 7:** LangChain ChatNVIDIA Orchestration Layer
+* [x] **Phase 8:** LangChain Structured Output Generation
 * [x] **Phase 9:** FastAPI Service Layer
 * [x] **Phase 10:** Streamlit Frontend
 * [x] **Phase 11:** Final Cleanup, Documentation, & Validation
@@ -102,15 +102,8 @@ Follow these steps to configure and run the application in a local development e
 * **MongoDB:** An active instance of MongoDB Community Server running locally or an Atlas connection string.
 * **Ollama:** Installed locally (macOS/Linux/Windows). Download from [ollama.com](https://ollama.com).
 
-### 2. Local LLM & Embedding Setup
-Start the Ollama application or service, and run the following terminal commands to pull the necessary models:
-```bash
-# Pull the generative reasoning model
-ollama pull gemma4:latest
-
-# Pull the semantic text embedding model
-ollama pull nomic-embed-text
-```
+### 2. Model Setup
+Both the generative reasoning model (`nvidia/nemotron-3-ultra-550b-a55b`) and the embedding model (`nvidia/nv-embedcode-7b-v1`) are hosted externally and accessed via OpenAI-compatible endpoints using the NVIDIA API. No local LLM download or running Ollama is required.
 
 ### 3. Project Configuration & Installation
 1. Clone the repository and navigate to the project root directory:
@@ -132,14 +125,18 @@ ollama pull nomic-embed-text
    > If your MongoDB password or username contains special characters (such as `@`, `:`, `/`, `+`, etc.), they **must be URL-encoded** (for example, `@` becomes `%40`) in the connection string to prevent URI parsing and authentication errors.
 
    ```env
-   # Database Configurations
-   MONGODB_URI=mongodb://localhost:27017
-   MONGODB_DB_NAME=rag_enterprise_db
+    # Database Configurations
+    MONGODB_URI=mongodb://localhost:27017
+    MONGODB_DB_NAME=rag_enterprise_db
 
-   # Ollama Configurations
-   OLLAMA_BASE_URL=http://localhost:11434
-   OLLAMA_GEN_MODEL=gemma4:latest
-   OLLAMA_EMBED_MODEL=nomic-embed-text
+    # NVIDIA API Configurations
+    NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1
+    NVIDIA_API_KEY=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
+    NVIDIA_GEN_MODEL=nvidia/nemotron-3-ultra-550b-a55b
+    NVIDIA_EMBED_API_KEY=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
+    NVIDIA_EMBED_MODEL=nvidia/nv-embedcode-7b-v1
+    EMBEDDING_PROVIDER=nvidia
+    EMBEDDING_DIMENSION=4096
 
    # Logging Configurations
    LOG_LEVEL=INFO
@@ -149,7 +146,12 @@ ollama pull nomic-embed-text
 
 #### A. Run the FastAPI Backend:
 Ensure MongoDB is running, then start the FastAPI development server:
+
 ```bash
+# Option 1: Run from the project root directory (Recommended)
+PYTHONPATH=. uvicorn backend.main:app --reload --port 8000
+
+# Option 2: Alternatively, navigate to the backend directory
 cd backend
 uvicorn main:app --reload --port 8000
 ```

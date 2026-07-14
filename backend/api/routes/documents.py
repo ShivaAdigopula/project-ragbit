@@ -7,7 +7,7 @@ from typing import Optional
 from fastapi import APIRouter, UploadFile, File, Form, status, HTTPException, BackgroundTasks
 from backend.db.repository import RAGRepository
 from backend.ingestion.pipeline import IngestionPipeline
-from backend.rag.embedder import OllamaEmbedder
+from backend.rag.embedder import Embedder
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
 logger = logging.getLogger("app")
@@ -20,7 +20,7 @@ async def process_and_embed_document_task(
 ) -> None:
     """
     Asynchronous background task to execute parsing, chunking,
-    embedding generation via Ollama, and saving results to MongoDB.
+    embedding generation via NVIDIA NIM, and saving results to MongoDB.
     """
     repo = RAGRepository()
     try:
@@ -38,17 +38,14 @@ async def process_and_embed_document_task(
         )
         
         # 2. Generate embeddings for all chunks asynchronously
-        embedder = OllamaEmbedder()
-        logger.info(f"Generating embeddings for {len(chunks)} chunks via Ollama...")
+        embedder = Embedder()
+        logger.info(f"Generating embeddings for {len(chunks)} chunks...")
         
-        # Fetch embeddings sequentially or concurrently
-        # Generating sequentially to avoid overloading local Ollama concurrency limits
-        for i, chunk in enumerate(chunks):
-            embedding = await embedder.get_embedding(chunk["content"])
+        chunk_texts = [chunk["content"] for chunk in chunks]
+        embeddings = await embedder.get_embeddings_batch(chunk_texts, input_type="passage")
+        for chunk, embedding in zip(chunks, embeddings):
             chunk["embedding"] = embedding
-            if (i + 1) % 10 == 0 or (i + 1) == len(chunks):
-                logger.info(f"Embedded {i + 1}/{len(chunks)} chunks")
-                
+            
         # 3. Store chunks in MongoDB
         await repo.insert_chunks(chunks, doc_id)
         

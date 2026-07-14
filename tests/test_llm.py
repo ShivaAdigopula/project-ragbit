@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from backend.services.llm_service import ContextCompressor, PromptBuilder, OllamaLLMService
+from backend.services.llm_service import ContextCompressor, PromptBuilder, NvidiaLLMService
 
 def test_context_compressor_budget_enforcement():
     # Set limit to 100 tokens
@@ -37,26 +37,17 @@ def test_prompt_builder_structure():
     assert "What are our margins?" in user_prompt
 
 @pytest.mark.asyncio
-async def test_ollama_service_execution():
-    service = OllamaLLMService()
+async def test_nvidia_service_execution():
+    service = NvidiaLLMService()
     
     mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = {
-        "message": {
-            "content": "The projected margins are 75%."
-        }
-    }
+    mock_response.content = "The projected margins are 75%."
     
-    # Mock httpx.AsyncClient.post call
-    with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
-        mock_post.return_value = mock_response
+    # Mock ChatNVIDIA ainvoke call
+    with patch("langchain_nvidia_ai_endpoints.ChatNVIDIA.ainvoke", new_callable=AsyncMock) as mock_invoke:
+        mock_invoke.return_value = mock_response
         
         response = await service.generate_response("System prompt", "User prompt")
         
         assert response == "The projected margins are 75%."
-        mock_post.assert_called_once()
-        # Verify temperature is set to 0.0 for hallucination control
-        args, kwargs = mock_post.call_args
-        payload = kwargs.get("json", {})
-        assert payload["options"]["temperature"] == 0.0
+        mock_invoke.assert_called_once()

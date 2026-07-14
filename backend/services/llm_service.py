@@ -1,6 +1,8 @@
 import logging
 import httpx
 from typing import List, Dict, Any, Tuple
+from langchain_nvidia_ai_endpoints import ChatNVIDIA
+from langchain_core.messages import SystemMessage, HumanMessage
 from backend.core.config import settings
 
 logger = logging.getLogger("app")
@@ -46,7 +48,7 @@ class ContextCompressor:
 
 class PromptBuilder:
     """
-    Structures the prompt template for local Ollama Gemma 12B reasoning,
+    Structures the prompt template for hosted NVIDIA Nemotron reasoning,
     incorporating context text, user queries, and strict hallucination boundaries.
     """
     @staticmethod
@@ -88,44 +90,41 @@ class PromptBuilder:
         )
 
 
-class OllamaLLMService:
+class NvidiaLLMService:
     """
-    Inference interface to local Ollama server hosting Gemma 12B.
+    Inference interface to hosted NVIDIA NIM Chat completions using ChatNVIDIA.
     Performs standard generation queries.
     """
     def __init__(self) -> None:
-        self.base_url = settings.OLLAMA_BASE_URL
-        self.model = settings.OLLAMA_GEN_MODEL
+        self.model = settings.NVIDIA_GEN_MODEL
+        self.api_key = settings.NVIDIA_API_KEY
+        self.client = ChatNVIDIA(
+            model=self.model,
+            api_key=self.api_key,
+            temperature=0.0,  # Set temperature to 0 to minimize randomness and hallucinations
+            max_completion_tokens=16384,
+            model_kwargs={
+                "reasoning_budget": 16384,
+                "chat_template_kwargs": {"enable_thinking": True}
+            }
+        )
 
     async def generate_response(self, system_prompt: str, user_prompt: str) -> str:
         """
-        Sends system and user prompts to local Ollama chat completions endpoint.
+        Sends system and user prompts to NVIDIA NIM chat completions endpoint.
         Returns raw text response.
         """
-        url = f"{self.base_url}/api/chat"
-        payload = {
-            "model": self.model,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            "options": {
-                "temperature": 0.0  # Set temperature to 0 to minimize randomness and hallucinations
-            },
-            "stream": False
-        }
-        
         try:
-            logger.info(f"Submitting query to Ollama local LLM ({self.model})")
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                response = await client.post(url, json=payload)
-                response.raise_for_status()
-                data = response.json()
-                
-                content = data["message"]["content"]
-                logger.info(f"Ollama response received successfully ({len(content)} chars)")
-                return content
+            logger.info(f"Submitting query to NVIDIA NIM LLM ({self.model})")
+            messages = [
+                SystemMessage(content=system_prompt),
+                HumanMessage(content=user_prompt)
+            ]
+            response = await self.client.ainvoke(messages)
+            content = response.content
+            logger.info(f"NVIDIA NIM response received successfully ({len(content)} chars)")
+            return content
                 
         except Exception as e:
-            logger.error(f"Ollama LLM response generation failed: {str(e)}", exc_info=True)
-            raise RuntimeError(f"Ollama LLM generation failed: {str(e)}") from e
+            logger.error(f"NVIDIA NIM LLM response generation failed: {str(e)}", exc_info=True)
+            raise RuntimeError(f"NVIDIA NIM LLM generation failed: {str(e)}") from e

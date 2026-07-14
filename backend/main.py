@@ -1,3 +1,13 @@
+import sys
+import os
+import warnings
+
+# Ensure root directory is in sys.path so absolute 'backend.*' imports resolve correctly
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Suppress pydub warning about missing ffmpeg (since audio transcription is not used)
+warnings.filterwarnings("ignore", category=RuntimeWarning, message="Couldn't find ffmpeg or avconv")
+
 import uuid
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status

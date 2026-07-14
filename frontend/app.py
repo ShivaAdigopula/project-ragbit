@@ -298,17 +298,17 @@ def check_backend_readiness() -> Dict[str, Any]:
     try:
         response = httpx.get(f"{BACKEND_URL}/ready", timeout=2.0)
         if response.status_code == 200:
-            return {"status": "ready", "db": "connected", "ollama": "connected"}
+            return {"status": "ready", "db": "connected", "nvidia": "connected"}
         elif response.status_code == 503:
             data = response.json()
             return {
                 "status": "partial",
                 "db": data.get("services", {}).get("database", "disconnected"),
-                "ollama": data.get("services", {}).get("ollama", "disconnected")
+                "nvidia": data.get("services", {}).get("nvidia", "disconnected")
             }
     except Exception:
         pass
-    return {"status": "offline", "db": "disconnected", "ollama": "disconnected"}
+    return {"status": "offline", "db": "disconnected", "nvidia": "disconnected"}
 
 def fetch_documents() -> List[Dict[str, Any]]:
     """Retrieves list of documents from backend."""
@@ -374,13 +374,13 @@ def query_rag_backend(query_text: str, filename_filter: Optional[str] = None) ->
 readiness = check_backend_readiness()
 
 db_pill = '<span class="status-pill"><span class="status-pill-dot"></span>MongoDB</span>' if readiness["db"] == "connected" else '<span class="status-pill offline"><span class="status-pill-dot"></span>MongoDB</span>'
-ollama_pill = '<span class="status-pill"><span class="status-pill-dot"></span>Ollama</span>' if readiness["ollama"] == "connected" else '<span class="status-pill offline"><span class="status-pill-dot"></span>Ollama</span>'
+nvidia_pill = '<span class="status-pill"><span class="status-pill-dot"></span>NVIDIA NIM</span>' if readiness["nvidia"] == "connected" else '<span class="status-pill offline"><span class="status-pill-dot"></span>NVIDIA NIM</span>'
 
 st.sidebar.markdown(
     f"""
     <div style="display: flex; gap: 0.5rem; margin-top: 1rem; margin-bottom: 1.5rem;">
         {db_pill}
-        {ollama_pill}
+        {nvidia_pill}
     </div>
     """, 
     unsafe_allow_html=True

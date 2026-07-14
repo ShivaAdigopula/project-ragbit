@@ -10,8 +10,8 @@ The system is architected around **Clean Architecture** principles to isolate de
 1. **API Delivery Layer (`backend/api`):** Serves REST requests, performs payload validation via Pydantic, routes traffic to core services, handles exception translation, and implements liveness/readiness indicators.
 2. **Ingestion & Parsing Layer (`backend/ingestion`):** Orchestrates raw byte extraction, handles MarkItDown operations, parses headers, and applies the chunking splits.
 3. **Database & Storage Layer (`backend/db`):** Standardizes MongoDB connections, controls database transactions, and encapsulates CRUD/Repository operations.
-4. **Retrieval Layer (`backend/rag`):** Manages vector embedding requests via local Ollama services, structures vector query operators, implements metadata filters, and performs the hybrid re-ranking.
-5. **Reasoning & Generative Layer (`backend/services`):** Orchestrates the Pydantic AI agent, constructs contextual prompt inputs, sets retry boundaries, and enforces schema-conforming JSON replies.
+4. **Retrieval Layer (`backend/rag`):** Manages vector embedding requests via LangChain OpenAIEmbeddings connecting to hosted NVIDIA NIM services, structures vector query operators, implements metadata filters, and performs the hybrid re-ranking.
+5. **Reasoning & Generative Layer (`backend/services`):** Orchestrates the LangChain ChatNVIDIA agent, constructs contextual prompt inputs, sets retry boundaries, and enforces schema-conforming JSON replies.
 
 ---
 
@@ -41,10 +41,10 @@ backend/
 │   ├── schemas/           # API Request/Response Pydantic models
 │   └── domain.py          # Pure Python schema representations of documents and chunks
 ├── rag/
-│   ├── embedder.py        # Local Ollama embedding interface (nomic-embed-text)
+│   ├── embedder.py        # LangChain embedding interface (nv-embedcode-7b-v1)
 │   └── search.py          # Vector query builder and Hybrid re-ranking engine
 └── services/
-    └── agent.py           # Pydantic AI agent defining system parameters and schemas
+    └── agent.py           # LangChain ChatNVIDIA agent wrapper defining system parameters and schemas
 ```
 
 ---
@@ -73,8 +73,8 @@ sequenceDiagram
         Ingestion (parser.py)->>Ingestion (chunker.py): Split into semantic chunks
         Ingestion (chunker.py)-->>Ingestion (parser.py): List of Text Chunks (with heading paths)
         Ingestion (parser.py)->>RAG (embedder.py): Generate embeddings for chunks
-        RAG (embedder.py)->>Ollama: Generate vectors (nomic-embed-text)
-        Ollama-->>RAG (embedder.py): Array of 768-dim floats
+        RAG (embedder.py)->>NVIDIA NIM: Generate vectors (nv-embedcode-7b-v1)
+        NVIDIA NIM-->>RAG (embedder.py): Array of 4096-dim floats
         RAG (embedder.py)-->>Ingestion (parser.py): List of Chunk Entities with Embeddings
         Ingestion (parser.py)->>DB (repository.py): Store Chunk Entities in chunks collection
         Ingestion (parser.py)->>DB (repository.py): Update Document (Status: completed, chunks_count)
@@ -90,16 +90,16 @@ sequenceDiagram
     autonumber
     Client->>API (queries.py): POST /api/v1/queries (query, filters, top_k)
     API (queries.py)->>RAG (embedder.py): Generate query embedding
-    RAG (embedder.py)->>Ollama: Query nomic-embed-text
-    Ollama-->>RAG (embedder.py): Query vector (768 dimensions)
+    RAG (embedder.py)->>NVIDIA NIM: Query nv-embedcode-7b-v1
+    NVIDIA NIM-->>RAG (embedder.py): Query vector (4096 dimensions)
     RAG (embedder.py)->>DB (repository.py): Execute MongoDB $vectorSearch (vector + metadata filter)
     DB (repository.py)-->>RAG (search.py): Top-N candidate chunks (vector scores)
     RAG (search.py)->>RAG (search.py): Apply keyword-overlap scoring & Rank Fusion
     RAG (search.py)-->>API (queries.py): Top-K re-ranked chunks
-    API (queries.py)->>Services (agent.py): Run Pydantic AI Agent (context chunks + user query)
-    Services (agent.py)->>Ollama: Call LLM (Gemma 12B) with system prompt & context
-    Ollama-->>Services (agent.py): JSON payload response
-    Services (agent.py)->>Services (agent.py): Validate against Pydantic Output Schema
+    API (queries.py)->>Services (agent.py): Run LangChain Agent Wrapper (context chunks + user query)
+    Services (agent.py)->>NVIDIA NIM: Call LLM (Nemotron 3 Ultra 550B) with system prompt & context
+    NVIDIA NIM-->>Services (agent.py): JSON payload response
+    Services (agent.py)->>Services (agent.py): Validate and extract against Pydantic Output Schema
     Services (agent.py)-->>API (queries.py): Validated Answer payload
     API (queries.py)-->>Client: HTTP 200 (Structured JSON response)
 ```
@@ -238,7 +238,7 @@ Stores actual document pieces along with embedding vectors:
 To maximize precision, the retrieval engine follows a **multi-stage hybrid retrieval** pattern without resorting to bloated orchestration frameworks.
 
 ### 6.1 Step 1: Pre-Filtered Vector Query
-* Retrieve query embedding from local `nomic-embed-text` hosted on Ollama.
+* Retrieve query embedding using LangChain OpenAIEmbeddings for the nv-embedcode-7b-v1 model hosted on NVIDIA NIM.
 * Run a MongoDB vector search with exact pre-filters inside the search index (to restrict candidates to matching files if specified).
 * Query pipeline example:
   ```json

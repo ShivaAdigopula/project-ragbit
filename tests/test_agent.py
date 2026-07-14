@@ -46,7 +46,7 @@ async def test_agent_graceful_degradation():
     
     # Force agent.run to raise an exception (e.g. timeout, connection failure, validation error)
     with patch.object(engine.agent, "run", new_callable=AsyncMock) as mock_run:
-        mock_run.side_effect = RuntimeError("Ollama service down")
+        mock_run.side_effect = RuntimeError("NVIDIA service down")
         
         chunks = []
         result = await engine.execute_reasoning("What is our target ARR?", chunks)

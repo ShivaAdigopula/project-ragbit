@@ -2,7 +2,7 @@ import logging
 import re
 from typing import List, Dict, Any, Optional
 from backend.db.repository import RAGRepository
-from backend.rag.embedder import OllamaEmbedder
+from backend.rag.embedder import Embedder
 
 logger = logging.getLogger("app")
 
@@ -29,7 +29,7 @@ class RetrievalEngine:
     Does NOT use heavy third-party framework wrappers (like LlamaIndex).
     """
     def __init__(self) -> None:
-        self.embedder = OllamaEmbedder()
+        self.embedder = Embedder()
         self.repository = RAGRepository()
         # Relative weights for semantic vs keyword matching (total = 1.0)
         self.semantic_weight = 0.7

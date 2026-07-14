@@ -1,9 +1,7 @@
 import logging
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
-from pydantic_ai import Agent, RunContext, NativeOutput, ModelSettings
-from pydantic_ai.models.ollama import OllamaModel
-from pydantic_ai.providers.ollama import OllamaProvider
+from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from backend.core.config import settings
 from backend.services.llm_service import PromptBuilder
 
@@ -56,27 +54,48 @@ class RAGAnswerSchema(BaseModel):
         description="Operation status. Must be exactly 'success' (if query was answered) or 'insufficient_context' (if query could not be answered)."
     )
 
+class LangChainAgentWrapper:
+    """
+    Wrapper around LangChain's ChatNVIDIA with_structured_output 
+    to mimic Pydantic AI's Agent class for compatibility.
+    """
+    def __init__(self, model_name: str, api_key: str, system_prompt: str):
+        # Initialize the ChatNVIDIA client as requested
+        self.client = ChatNVIDIA(
+            model=model_name,
+            api_key=api_key,
+            temperature=1.0,
+            top_p=0.95,
+            max_tokens=16384,
+            model_kwargs={
+                "reasoning_budget": 16384,
+                "chat_template_kwargs": {"enable_thinking": True}
+            }
+        )
+        self.structured_llm = self.client.with_structured_output(RAGAnswerSchema)
+        self.system_prompt = system_prompt
+
+    async def run(self, user_prompt: str):
+        from langchain_core.messages import SystemMessage, HumanMessage
+        messages = [
+            SystemMessage(content=self.system_prompt),
+            HumanMessage(content=user_prompt)
+        ]
+        output = await self.structured_llm.ainvoke(messages)
+        
+        class MockRunResult:
+            def __init__(self, output):
+                self.output = output
+                
+        return MockRunResult(output)
+
 # --- Pydantic AI Agent Setup ---
 
-from pydantic_ai.profiles import ModelProfile
-
-# Initialize local Ollama model using native Pydantic AI Ollama wrapper
-ollama_provider = OllamaProvider(base_url=f"{settings.OLLAMA_BASE_URL}/v1")
-ollama_model = OllamaModel(
-    model_name=settings.OLLAMA_GEN_MODEL,
-    provider=ollama_provider
-)
-
-
-# Instantiate the Agent with strict output type binding
-rag_agent = Agent(
-    model=ollama_model,
-    output_type=NativeOutput(RAGAnswerSchema),
-    system_prompt=PromptBuilder.get_system_prompt(),
-    retries=3,  # Self-healing loop: if output fails validation, agent retries up to 3 times
-    model_settings=ModelSettings(
-        extra_body={"options": {"num_ctx": 8192}}
-    )
+# Instantiate the wrapped agent using ChatNVIDIA from langchain_nvidia_ai_endpoints
+rag_agent = LangChainAgentWrapper(
+    model_name=settings.NVIDIA_GEN_MODEL,
+    api_key=settings.NVIDIA_API_KEY,
+    system_prompt=PromptBuilder.get_system_prompt()
 )
 
 class PydanticAIEngine:
